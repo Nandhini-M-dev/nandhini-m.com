@@ -81,39 +81,50 @@
     });
   }
 
-  // ─── Navbar Scroll ──────────────────────────
+  // ─── Combined Scroll Handler (single listener) ──
   var navbar = document.getElementById('navbar');
-  var ticking = false;
+  var sections = document.querySelectorAll('section[id]');
+  var navLinks = document.querySelectorAll('.nav-links a');
+  var scrollTopBtn = document.getElementById('scrollTop');
+  var heroSection = document.getElementById('hero');
+  var scrollTicking = false;
 
   function onScroll() {
-    if (!ticking) {
-      requestAnimationFrame(function () {
-        if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 60);
-        ticking = false;
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(function () {
+      var sy = window.scrollY;
+
+      // Navbar background
+      if (navbar) navbar.classList.toggle('scrolled', sy > 60);
+
+      // Active nav link
+      var y = sy + 200;
+      sections.forEach(function (s) {
+        if (y >= s.offsetTop && y < s.offsetTop + s.offsetHeight) {
+          var id = s.getAttribute('id');
+          navLinks.forEach(function (a) {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+          });
+        }
       });
-      ticking = true;
-    }
+
+      // Scroll-to-top visibility
+      if (scrollTopBtn && heroSection) {
+        scrollTopBtn.classList.toggle('visible', sy > heroSection.offsetHeight);
+      }
+
+      scrollTicking = false;
+    });
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  // ─── Active Nav Link ────────────────────────
-  var sections = document.querySelectorAll('section[id]');
-  var navLinks = document.querySelectorAll('.nav-links a');
-
-  function updateActive() {
-    var y = window.scrollY + 200;
-    sections.forEach(function (s) {
-      if (y >= s.offsetTop && y < s.offsetTop + s.offsetHeight) {
-        var id = s.getAttribute('id');
-        navLinks.forEach(function (a) {
-          a.classList.toggle('active', a.getAttribute('href') === '#' + id);
-        });
-      }
+  if (scrollTopBtn) {
+    scrollTopBtn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
-
-  window.addEventListener('scroll', updateActive, { passive: true });
 
   // ─── Mobile Menu ────────────────────────────
   var menuBtn = document.getElementById('menuBtn');
@@ -134,24 +145,6 @@
         menuBtn.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
       });
-    });
-  }
-
-  // ─── Scroll to Top Button ───────────────────
-  var scrollTopBtn = document.getElementById('scrollTop');
-  var heroSection = document.getElementById('hero');
-
-  function checkScrollTop() {
-    if (!scrollTopBtn || !heroSection) return;
-    var pastHero = window.scrollY > heroSection.offsetHeight;
-    scrollTopBtn.classList.toggle('visible', pastHero);
-  }
-
-  window.addEventListener('scroll', checkScrollTop, { passive: true });
-
-  if (scrollTopBtn) {
-    scrollTopBtn.addEventListener('click', function () {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
