@@ -104,7 +104,13 @@
         if (y >= s.offsetTop && y < s.offsetTop + s.offsetHeight) {
           var id = s.getAttribute('id');
           navLinks.forEach(function (a) {
-            a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+            var isActive = a.getAttribute('href') === '#' + id;
+            a.classList.toggle('active', isActive);
+            if (isActive) {
+              a.setAttribute('aria-current', 'true');
+            } else {
+              a.removeAttribute('aria-current');
+            }
           });
         }
       });

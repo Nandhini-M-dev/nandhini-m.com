@@ -3,12 +3,13 @@
    Cache-first for assets, network-first for pages
    ============================================ */
 
-var CACHE_NAME = 'nandhini-portfolio-v1';
+var CACHE_NAME = 'nandhini-portfolio-v2';
 var ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
-  '/script.js'
+  '/script.js',
+  '/og-image.png'
 ];
 
 // Install — pre-cache core assets

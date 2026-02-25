@@ -1005,7 +1005,7 @@ strong {
   transform: translateY(-2px);
 }
 
-.project-hl h5 {
+.project-hl h4 {
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
@@ -1474,6 +1474,12 @@ a.contact-info-item:hover .contact-icon {
   .hero-actions { flex-direction: column; align-items: center; }
 }
 
+/* ===== PERFORMANCE — content-visibility for below-fold sections ===== */
+#about, #experience, #skills, #projects, #education, #contact {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 800px;
+}
+
 /* ===== A11Y ===== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1486,4 +1492,27 @@ a.contact-info-item:hover .contact-icon {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+/* Ensure links are distinguishable (not just color) */
+.contact-info-item:focus-visible,
+.social-link:focus-visible,
+.btn:focus-visible,
+.nav-cta:focus-visible,
+.project-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
