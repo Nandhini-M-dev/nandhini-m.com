@@ -29,12 +29,9 @@
 <!-- Favicon -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%23111111'/><text x='50' y='70' font-family='system-ui' font-size='56' font-weight='700' fill='%23C6A75E' text-anchor='middle'>N</text></svg>">
 
-<!-- Preload critical fonts — non-blocking -->
+<!-- Font preconnect — speeds up cached font loads on return visits -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=optional">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=optional" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=optional"></noscript>
 
 <!-- DNS prefetch / preconnect for third-party origins -->
 <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -606,6 +603,11 @@ window.addEventListener('load', function () {
     loader.classList.add('hidden');
     setTimeout(function () { loader.remove(); }, 500);
   }
+  // Load Google Fonts after render to prevent CLS from font swap
+  var fl = document.createElement('link');
+  fl.rel = 'stylesheet';
+  fl.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=optional';
+  document.head.appendChild(fl);
   // Service Worker registration
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function () {});
