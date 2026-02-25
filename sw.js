@@ -3,7 +3,7 @@
    Cache-first for assets, network-first for pages
    ============================================ */
 
-var CACHE_NAME = 'nandhini-portfolio-v3';
+var CACHE_NAME = 'nandhini-portfolio-v4';
 var ASSETS = [
   '/',
   '/index.html',

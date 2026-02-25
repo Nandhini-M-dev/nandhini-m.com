@@ -1565,6 +1565,65 @@ a.contact-info-item:hover .contact-icon {
   z-index: 9998;
 }
 
+/* ===== SUCCESS POPUP ===== */
+.toast-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s, visibility 0.35s;
+}
+
+.toast-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.toast-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  z-index: 10000;
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  border-radius: 16px;
+  padding: 44px 52px;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s, transform 0.35s, visibility 0.35s;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+  max-width: 380px;
+  width: 90%;
+}
+
+.toast-popup.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.toast-check {
+  margin-bottom: 16px;
+}
+
+.toast-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.toast-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 /* ===== PERFORMANCE ===== */
 #about, #experience, #skills, #projects, #education, #contact {
   content-visibility: auto;

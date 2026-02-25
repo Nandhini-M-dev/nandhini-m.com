@@ -195,9 +195,8 @@
       .then(function (res) { return res.json(); })
       .then(function (result) {
         if (result.success) {
-          formStatus.textContent = 'Message sent successfully!';
-          formStatus.classList.add('success');
           form.reset();
+          showSuccessPopup();
         } else {
           formStatus.textContent = 'Something went wrong. Please try again.';
           formStatus.classList.add('error');
@@ -212,6 +211,95 @@
         formBtnText.textContent = 'Send Message';
       });
     });
+  }
+
+  // ─── Success Popup + Gold Confetti ──────────
+  function showSuccessPopup() {
+    var overlay = document.getElementById('toastOverlay');
+    var popup = document.getElementById('toastPopup');
+    if (!overlay || !popup) return;
+
+    overlay.classList.add('show');
+    popup.classList.add('show');
+    launchGoldConfetti();
+
+    var closeTimer = setTimeout(hideSuccessPopup, 3000);
+
+    function onClose() {
+      clearTimeout(closeTimer);
+      hideSuccessPopup();
+      overlay.removeEventListener('click', onClose);
+      popup.removeEventListener('click', onClose);
+    }
+
+    overlay.addEventListener('click', onClose);
+    popup.addEventListener('click', onClose);
+  }
+
+  function hideSuccessPopup() {
+    var overlay = document.getElementById('toastOverlay');
+    var popup = document.getElementById('toastPopup');
+    if (overlay) overlay.classList.remove('show');
+    if (popup) popup.classList.remove('show');
+  }
+
+  function launchGoldConfetti() {
+    var cc = document.createElement('canvas');
+    cc.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:10001;pointer-events:none';
+    document.body.appendChild(cc);
+    var ctx = cc.getContext('2d');
+    cc.width = window.innerWidth;
+    cc.height = window.innerHeight;
+
+    var isLight = root.getAttribute('data-theme') === 'light';
+    var colors = isLight
+      ? ['#8C6A2E', '#A07E3E', '#6B4F1E', '#C6A75E', '#D4B56A']
+      : ['#C6A75E', '#D4B56A', '#9F8747', '#E8D5A3', '#B8954A'];
+
+    var pieces = [];
+    for (var i = 0; i < 80; i++) {
+      pieces.push({
+        x: cc.width / 2,
+        y: cc.height / 2,
+        vx: (Math.random() - 0.5) * 16,
+        vy: -(Math.random() * 12 + 4),
+        w: Math.random() * 8 + 4,
+        h: Math.random() * 6 + 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * 360,
+        rotV: (Math.random() - 0.5) * 12,
+        alpha: 1
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, cc.width, cc.height);
+      var alive = false;
+      for (var i = 0; i < pieces.length; i++) {
+        var p = pieces[i];
+        p.x += p.vx;
+        p.vy += 0.3;
+        p.y += p.vy;
+        p.rot += p.rotV;
+        p.alpha -= 0.006;
+        if (p.alpha <= 0) continue;
+        alive = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI / 180);
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+      if (alive) {
+        requestAnimationFrame(animate);
+      } else {
+        cc.remove();
+      }
+    }
+
+    animate();
   }
 
   // ─── Scroll Reveal (Intersection Observer) ──
@@ -269,6 +357,7 @@
     }
 
     resize();
+    canvas.style.visibility = 'visible';
 
     var isLight = root.getAttribute('data-theme') === 'light';
     var count = Math.min(Math.floor(w * h / 4000), 50); // dense particles, cap at 200
