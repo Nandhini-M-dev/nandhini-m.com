@@ -24,10 +24,12 @@
 
     // Smooth ring follow
     (function lerpRing() {
-      rx += (mx - rx) * 0.15;
-      ry += (my - ry) * 0.15;
-      ring.style.left = rx + 'px';
-      ring.style.top = ry + 'px';
+      if (!document.hidden) {
+        rx += (mx - rx) * 0.15;
+        ry += (my - ry) * 0.15;
+        ring.style.left = rx + 'px';
+        ring.style.top = ry + 'px';
+      }
       requestAnimationFrame(lerpRing);
     })();
 
@@ -89,6 +91,14 @@
   var heroSection = document.getElementById('hero');
   var scrollProgress = document.getElementById('scrollProgress');
   var scrollTicking = false;
+  var heroVisible = true;
+
+  // Pause heavy canvas animations when hero scrolls off-screen
+  if (heroSection && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      heroVisible = entries[0].isIntersecting;
+    }, { threshold: 0 }).observe(heroSection);
+  }
 
   function onScroll() {
     if (scrollTicking) return;
@@ -283,6 +293,10 @@
     var frameCount = 0;
 
     function draw() {
+      if (!heroVisible || document.hidden) {
+        animId = requestAnimationFrame(draw);
+        return;
+      }
       ctx.clearRect(0, 0, w, h);
       frameCount++;
       for (var i = 0; i < particles.length; i++) {
@@ -340,6 +354,7 @@
       gh = gc.height = rect.height;
     }
     gResize();
+    var geoParentRect = gc.parentElement.getBoundingClientRect();
 
     // Icosahedron vertices using golden ratio
     var phi = (1 + Math.sqrt(5)) / 2;
@@ -370,9 +385,8 @@
     var mouseInfX = 0, mouseInfY = 0;
 
     gc.parentElement.addEventListener('mousemove', function (e) {
-      var rect = gc.parentElement.getBoundingClientRect();
-      mouseInfX = ((e.clientX - rect.left) / rect.width - 0.5) * 0.6;
-      mouseInfY = ((e.clientY - rect.top) / rect.height - 0.5) * 0.6;
+      mouseInfX = ((e.clientX - geoParentRect.left) / geoParentRect.width - 0.5) * 0.6;
+      mouseInfY = ((e.clientY - geoParentRect.top) / geoParentRect.height - 0.5) * 0.6;
     });
     gc.parentElement.addEventListener('mouseleave', function () {
       mouseInfX = 0;
@@ -397,6 +411,10 @@
     }
 
     function drawGeo() {
+      if (!heroVisible || document.hidden) {
+        requestAnimationFrame(drawGeo);
+        return;
+      }
       gCtx.clearRect(0, 0, gw, gh);
       autoRotX += 0.003;
       autoRotY += 0.005;
@@ -462,6 +480,7 @@
 
     window.addEventListener('resize', function () {
       gResize();
+      geoParentRect = gc.parentElement.getBoundingClientRect();
     });
   }
 
@@ -510,24 +529,25 @@
     var heroEl = document.querySelector('.hero');
 
     heroEl.addEventListener('mousemove', function (e) {
+      // Batch-read all rects first to avoid forced reflow interleaving
+      var rects = [];
       for (var i = 0; i < magLetters.length; i++) {
-        var letter = magLetters[i];
-        var rect = letter.getBoundingClientRect();
-        var lx = rect.left + rect.width / 2;
-        var ly = rect.top + rect.height / 2;
+        rects.push(magLetters[i].getBoundingClientRect());
+      }
+      // Batch-write all transforms
+      for (var i = 0; i < magLetters.length; i++) {
+        var lx = rects[i].left + rects[i].width / 2;
+        var ly = rects[i].top + rects[i].height / 2;
         var dx = e.clientX - lx;
         var dy = e.clientY - ly;
         var dist = Math.sqrt(dx * dx + dy * dy);
-        var maxDist = 120;
 
-        if (dist < maxDist) {
-          var force = (1 - dist / maxDist) * 30;
+        if (dist < 120) {
+          var force = (1 - dist / 120) * 30;
           var angle = Math.atan2(dy, dx);
-          var tx = -Math.cos(angle) * force;
-          var ty = -Math.sin(angle) * force;
-          letter.style.transform = 'translate(' + tx + 'px, ' + ty + 'px)';
+          magLetters[i].style.transform = 'translate(' + (-Math.cos(angle) * force) + 'px, ' + (-Math.sin(angle) * force) + 'px)';
         } else {
-          letter.style.transform = '';
+          magLetters[i].style.transform = '';
         }
       }
     });

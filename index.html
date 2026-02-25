@@ -32,9 +32,9 @@
 <!-- Preload critical fonts — non-blocking -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=swap" fetchpriority="low">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=swap"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=optional">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=optional" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@1,600&display=optional"></noscript>
 
 <!-- DNS prefetch / preconnect for third-party origins -->
 <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -79,9 +79,8 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 .icon-sun{display:block}.icon-moon{display:none}[data-theme="light"] .icon-sun{display:none}[data-theme="light"] .icon-moon{display:block}
 </style>
 
-<!-- Main stylesheet — non-blocking -->
-<link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="styles.css"></noscript>
+<!-- Main stylesheet -->
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
