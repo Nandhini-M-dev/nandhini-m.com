@@ -60,29 +60,52 @@
 }
 </script>
 
-<!-- Inline critical CSS — prevents FOUC -->
+<!-- Inline critical CSS — all above-the-fold layout to prevent CLS -->
 <style>
 :root{--bg:#111111;--surface:#1A1A1A;--accent:#C6A75E;--text:#EAEAEA;--text-muted:#8A8A8A;--border:rgba(198,167,94,0.12);--nav-bg:rgba(17,17,17,0.92);--font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-display:'Space Grotesk',var(--font-sans)}
 [data-theme="light"]{--bg:#E8E4DB;--surface:#EFECE5;--accent:#8C6A2E;--text:#111111;--text-muted:#555555;--border:rgba(140,106,46,0.12);--nav-bg:rgba(232,228,219,0.92)}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden;transition:background .5s,color .5s}
-.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative}
+.cursor-dot,.cursor-ring{position:fixed;pointer-events:none;opacity:0}
+.skip-link{position:fixed;top:-100px;left:16px;z-index:200}.skip-link:focus{top:0}
+.navbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:24px 5%;background:transparent;transition:background .3s,padding .3s}
+.scroll-progress{position:absolute;bottom:0;left:0;height:2.5px;width:0}
+.mobile-menu-btn{display:none}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:100px 5% 60px}
 .hero-content{position:relative;z-index:1}
 .hero-split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;max-width:1200px;width:100%}
 .hero-left{text-align:left}
-.hero-name{font-family:'Space Grotesk',sans-serif;font-size:clamp(2.4rem,6vw,4.5rem);font-weight:700;color:var(--accent);line-height:1.1}
-.hero-title{font-size:clamp(1rem,2.5vw,1.4rem);font-weight:500;color:var(--text-muted);margin-top:8px}
-.navbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:24px 5%}
+.hero-right{position:relative;height:460px;display:flex;align-items:center;justify-content:center}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#geoCanvas{width:100%;height:100%}
+.hero-greeting{font-size:14px;font-weight:500;color:var(--text-muted);letter-spacing:5px;text-transform:uppercase;margin-bottom:18px;opacity:0;transform:translateY(24px);animation:heroFadeUp .7s ease forwards}
+.hero-name{font-family:var(--font-display);font-size:clamp(2.4rem,6vw,4.5rem);font-weight:700;color:var(--accent);line-height:1.1;opacity:0;transform:translateY(24px);animation:heroFadeUp .7s ease .1s forwards}
+.hero-title{font-size:clamp(1rem,2.5vw,1.4rem);font-weight:500;color:var(--text-muted);margin-top:8px;opacity:0;transform:translateY(24px);animation:heroFadeUp .7s ease .2s forwards}
+.hero-desc{font-size:15px;color:var(--text-muted);line-height:1.85;max-width:530px;margin:0 0 42px;opacity:0;transform:translateY(24px);animation:heroFadeUp .7s ease .3s forwards}
+.hero-actions{display:flex;gap:16px;justify-content:flex-start;flex-wrap:wrap;margin-bottom:48px;opacity:0;transform:translateY(24px);animation:heroFadeUp .7s ease .4s forwards}
+.hero-socials{display:flex;gap:14px;justify-content:flex-start;opacity:0;transform:translateY(24px);animation:heroFadeUp .7s ease .5s forwards}
+@keyframes heroFadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 .section{padding:100px 5%}.container{max-width:900px;margin:0 auto}
 .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s,transform .7s}.reveal.visible{opacity:1;transform:none}
 .icon-sun{display:block}.icon-moon{display:none}[data-theme="light"] .icon-sun{display:none}[data-theme="light"] .icon-moon{display:block}
+@media(max-width:768px){.nav-links,.nav-cta{display:none}.mobile-menu-btn{display:flex}.hero{padding:80px 6% 60px}.hero-split{grid-template-columns:1fr;gap:32px}.hero-left{text-align:center}.hero-right{display:none}.hero-actions{justify-content:center}.hero-socials{justify-content:center}.scroll-cue{display:none}}
+.page-loader{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .4s,visibility .4s}
+.page-loader.hidden{opacity:0;visibility:hidden}
+.loader-ring{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:loaderSpin .8s linear infinite}
+@keyframes loaderSpin{to{transform:rotate(360deg)}}
 </style>
 
-<!-- Main stylesheet -->
-<link rel="stylesheet" href="styles.css">
+<!-- Main stylesheet — non-blocking (critical CSS is inlined above) -->
+<link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="styles.css"></noscript>
 </head>
 <body>
+
+<!-- Page loader -->
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+  <div class="loader-ring"></div>
+</div>
 
 <!-- Custom cursor -->
 <div class="cursor-dot" id="cursorDot"></div>
@@ -567,13 +590,19 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);line-he
 <!-- Deferred JS — non-blocking -->
 <script src="script.js" defer></script>
 
-<!-- Service Worker registration -->
+<!-- Hide loader when page is ready -->
 <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
+window.addEventListener('load', function () {
+  var loader = document.getElementById('pageLoader');
+  if (loader) {
+    loader.classList.add('hidden');
+    setTimeout(function () { loader.remove(); }, 500);
+  }
+  // Service Worker registration
+  if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function () {});
-  });
-}
+  }
+});
 </script>
 
 </body>

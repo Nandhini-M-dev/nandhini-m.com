@@ -1527,7 +1527,7 @@ a.contact-info-item:hover .contact-icon {
   .hero-left { text-align: center; }
   .hero-actions { justify-content: center; }
   .hero-socials { justify-content: center; }
-  .hero-right { height: 280px; }
+  .hero-right { display: none; }
   .about-grid { grid-template-columns: 1fr; gap: 36px; }
   .skills-grid { grid-template-columns: 1fr; }
   .contact-split { grid-template-columns: 1fr; gap: 36px; }

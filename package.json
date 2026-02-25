@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "npx -y csso-cli styles.css -o styles.css && npx -y terser script.js -o script.js -c -m"
+  }
+}
