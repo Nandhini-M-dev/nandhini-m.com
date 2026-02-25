@@ -1537,7 +1537,7 @@ a.contact-info-item:hover .contact-icon {
   .exp-header { flex-direction: column; }
   .scroll-cue { display: none; }
   .exp-card { padding: 28px; }
-  .hero-greeting, .hero-name, .hero-title, .hero-desc, .hero-actions, .hero-socials { animation-delay: 0s; }
+  .hero-greeting, .hero-name, .hero-title, .hero-desc, .hero-actions, .hero-socials { animation: none; opacity: 1; transform: none; }
 }
 
 @media (max-width: 480px) {
