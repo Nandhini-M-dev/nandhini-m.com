@@ -191,6 +191,18 @@ strong {
   box-shadow: 0 1px 20px rgba(0, 0, 0, 0.06);
 }
 
+/* Scroll progress line — draws at bottom of navbar */
+.scroll-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2.5px;
+  background: linear-gradient(90deg, var(--accent), rgba(var(--accent-rgb), 0.4));
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.3);
+}
+
 .nav-logo {
   display: inline-flex;
   align-items: center;
@@ -474,6 +486,33 @@ strong {
   max-width: 740px;
 }
 
+/* ===== HERO SPLIT LAYOUT ===== */
+.hero-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.hero-left {
+  text-align: left;
+}
+
+.hero-right {
+  position: relative;
+  height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#geoCanvas {
+  width: 100%;
+  height: 100%;
+}
+
 .hero-greeting {
   font-size: 14px;
   font-weight: 500;
@@ -516,12 +555,20 @@ strong {
 }
 
 [data-theme="light"] .hero-name {
+  color: #8C6A2E;
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none;
+}
+
+[data-theme="light"] .hero-name .mag-letter {
   color: transparent;
   background: linear-gradient(135deg, #8C6A2E, #C6A75E);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: none;
 }
 
 .hero-title {
@@ -542,7 +589,7 @@ strong {
   color: var(--text-muted);
   line-height: 1.85;
   max-width: 530px;
-  margin: 0 auto 42px;
+  margin: 0 0 42px;
   opacity: 0;
   transform: translateY(24px);
   animation: heroFadeUp 0.7s ease 0.3s forwards;
@@ -556,7 +603,7 @@ strong {
 .hero-actions {
   display: flex;
   gap: 16px;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   margin-bottom: 48px;
   opacity: 0;
@@ -624,7 +671,7 @@ strong {
 .hero-socials {
   display: flex;
   gap: 14px;
-  justify-content: center;
+  justify-content: flex-start;
   opacity: 0;
   transform: translateY(24px);
   animation: heroFadeUp 0.7s ease 0.5s forwards;
@@ -760,7 +807,7 @@ strong {
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
@@ -770,6 +817,14 @@ strong {
   font-weight: 700;
   color: var(--text);
   letter-spacing: var(--ls-tight);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exp-icon {
+  flex-shrink: 0;
+  color: var(--accent);
 }
 
 .exp-company {
@@ -860,6 +915,9 @@ strong {
   color: var(--accent);
   margin-bottom: 18px;
   padding-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -874,6 +932,9 @@ strong {
   padding: 7px 14px;
   border-radius: 6px;
   background: var(--tag-bg);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text);
   font-weight: 500;
   border: 1px solid transparent;
@@ -1122,6 +1183,14 @@ strong {
   color: var(--text);
   letter-spacing: var(--ls-tight);
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edu-icon {
+  color: var(--accent);
+  flex-shrink: 0;
 }
 
 .edu-school {
@@ -1454,6 +1523,11 @@ a.contact-info-item:hover .contact-icon {
   .mobile-menu { display: flex; }
 
   .hero { padding: 80px 6% 60px; }
+  .hero-split { grid-template-columns: 1fr; gap: 32px; }
+  .hero-left { text-align: center; }
+  .hero-actions { justify-content: center; }
+  .hero-socials { justify-content: center; }
+  .hero-right { height: 280px; }
   .about-grid { grid-template-columns: 1fr; gap: 36px; }
   .skills-grid { grid-template-columns: 1fr; }
   .contact-split { grid-template-columns: 1fr; gap: 36px; }
@@ -1474,7 +1548,24 @@ a.contact-info-item:hover .contact-icon {
   .hero-actions { flex-direction: column; align-items: center; }
 }
 
-/* ===== PERFORMANCE — content-visibility for below-fold sections ===== */
+/* ===== MAGNETIC HERO TEXT ===== */
+.mag-letter {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  will-change: transform;
+}
+
+/* ===== GOLDEN SPARKLE TRAIL ===== */
+#sparkleCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* ===== PERFORMANCE ===== */
 #about, #experience, #skills, #projects, #education, #contact {
   content-visibility: auto;
   contain-intrinsic-size: auto 800px;

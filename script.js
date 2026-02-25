@@ -87,6 +87,7 @@
   var navLinks = document.querySelectorAll('.nav-links a');
   var scrollTopBtn = document.getElementById('scrollTop');
   var heroSection = document.getElementById('hero');
+  var scrollProgress = document.getElementById('scrollProgress');
   var scrollTicking = false;
 
   function onScroll() {
@@ -97,6 +98,13 @@
 
       // Navbar background
       if (navbar) navbar.classList.toggle('scrolled', sy > 60);
+
+      // Scroll progress line
+      if (scrollProgress) {
+        var docH = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = docH > 0 ? (sy / docH) * 100 : 0;
+        scrollProgress.style.width = pct + '%';
+      }
 
       // Active nav link
       var y = sy + 200;
@@ -197,23 +205,32 @@
   }
 
   // ─── Scroll Reveal (Intersection Observer) ──
-  if ('IntersectionObserver' in window) {
-    var revealObs = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          revealObs.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  // Defer to avoid blocking main thread
+  var initReveal = function () {
+    if ('IntersectionObserver' in window) {
+      var revealObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            revealObs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-    document.querySelectorAll('.reveal').forEach(function (el) {
-      revealObs.observe(el);
-    });
+      document.querySelectorAll('.reveal').forEach(function (el) {
+        revealObs.observe(el);
+      });
+    } else {
+      document.querySelectorAll('.reveal').forEach(function (el) {
+        el.classList.add('visible');
+      });
+    }
+  };
+
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(initReveal);
   } else {
-    document.querySelectorAll('.reveal').forEach(function (el) {
-      el.classList.add('visible');
-    });
+    setTimeout(initReveal, 1);
   }
 
   // ─── Gold Particle Canvas (Desktop only) ────
@@ -309,30 +326,293 @@
     });
   }
 
-  initParticles();
+  // ─── 3D Golden Wireframe Icosahedron ─────────
+  function initGeoShape() {
+    var gc = document.getElementById('geoCanvas');
+    if (!gc || isMobile()) return;
 
-  // ─── 3D Tilt on Project Cards (Desktop) ─────
-  if (!isMobile()) {
-    var cards = document.querySelectorAll('.project-card');
-    cards.forEach(function (card) {
-      card.classList.add('tilt-hover');
+    var gCtx = gc.getContext('2d');
+    var gw, gh;
 
-      card.addEventListener('mousemove', function (e) {
-        var rect = card.getBoundingClientRect();
-        var x = e.clientX - rect.left;
-        var y = e.clientY - rect.top;
-        var cx = rect.width / 2;
-        var cy = rect.height / 2;
+    function gResize() {
+      var rect = gc.parentElement.getBoundingClientRect();
+      gw = gc.width = rect.width;
+      gh = gc.height = rect.height;
+    }
+    gResize();
 
-        var rotY = ((x - cx) / cx) * 3;  // max 3deg
-        var rotX = ((cy - y) / cy) * 2;  // max 2deg
+    // Icosahedron vertices using golden ratio
+    var phi = (1 + Math.sqrt(5)) / 2;
+    var len = Math.sqrt(1 + phi * phi);
+    var rawVerts = [
+      [0, 1, phi], [0, -1, phi], [0, 1, -phi], [0, -1, -phi],
+      [1, phi, 0], [-1, phi, 0], [1, -phi, 0], [-1, -phi, 0],
+      [phi, 0, 1], [-phi, 0, 1], [phi, 0, -1], [-phi, 0, -1]
+    ];
+    var verts = rawVerts.map(function (v) {
+      return [v[0] / len, v[1] / len, v[2] / len];
+    });
 
-        card.style.transform = 'perspective(800px) rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg) translateY(-6px)';
+    // 30 edges of an icosahedron
+    var edges = [
+      [0,1],[0,4],[0,5],[0,8],[0,9],
+      [1,6],[1,7],[1,8],[1,9],
+      [2,3],[2,4],[2,5],[2,10],[2,11],
+      [3,6],[3,7],[3,10],[3,11],
+      [4,5],[4,8],[4,10],
+      [5,9],[5,11],
+      [6,7],[6,8],[6,10],
+      [7,9],[7,11],
+      [8,10],[9,11]
+    ];
+
+    var autoRotX = 0, autoRotY = 0;
+    var mouseInfX = 0, mouseInfY = 0;
+
+    gc.parentElement.addEventListener('mousemove', function (e) {
+      var rect = gc.parentElement.getBoundingClientRect();
+      mouseInfX = ((e.clientX - rect.left) / rect.width - 0.5) * 0.6;
+      mouseInfY = ((e.clientY - rect.top) / rect.height - 0.5) * 0.6;
+    });
+    gc.parentElement.addEventListener('mouseleave', function () {
+      mouseInfX = 0;
+      mouseInfY = 0;
+    });
+
+    function rotateP(p, ax, ay) {
+      var cosY = Math.cos(ay), sinY = Math.sin(ay);
+      var x1 = p[0] * cosY - p[2] * sinY;
+      var z1 = p[0] * sinY + p[2] * cosY;
+      var cosX = Math.cos(ax), sinX = Math.sin(ax);
+      var y2 = p[1] * cosX - z1 * sinX;
+      var z2 = p[1] * sinX + z1 * cosX;
+      return [x1, y2, z2];
+    }
+
+    function project(p) {
+      var fov = 1.8;
+      var z = p[2] + fov;
+      var scale = Math.min(gw, gh) * 0.7;
+      return { x: gw / 2 + (p[0] / z) * scale, y: gh / 2 + (p[1] / z) * scale, z: p[2] };
+    }
+
+    function drawGeo() {
+      gCtx.clearRect(0, 0, gw, gh);
+      autoRotX += 0.003;
+      autoRotY += 0.005;
+
+      var ax = autoRotX + mouseInfY;
+      var ay = autoRotY + mouseInfX;
+
+      var isLight = root.getAttribute('data-theme') === 'light';
+      var goldRGB = isLight ? '140,106,46' : '198,167,94';
+
+      var projected = verts.map(function (v) { return rotateP(v, ax, ay); }).map(project);
+
+      // Draw edges with depth-based alpha
+      for (var i = 0; i < edges.length; i++) {
+        var a = projected[edges[i][0]];
+        var b = projected[edges[i][1]];
+        var avgZ = (a.z + b.z) / 2;
+        var alpha = 0.12 + (avgZ + 1) * 0.22;
+
+        gCtx.beginPath();
+        gCtx.moveTo(a.x, a.y);
+        gCtx.lineTo(b.x, b.y);
+        gCtx.strokeStyle = 'rgba(' + goldRGB + ',' + alpha + ')';
+        gCtx.lineWidth = 1.2;
+        gCtx.stroke();
+      }
+
+      // Tech labels for vertices
+      var techLabels = ['React', 'Next.js', 'Angular', 'Node', 'MongoDB', 'TypeScript', 'JS', 'Tailwind', 'Git', 'HTML', 'CSS', 'Figma'];
+
+      // Draw vertices with glow + tech labels
+      for (var j = 0; j < projected.length; j++) {
+        var p = projected[j];
+        var vAlpha = 0.3 + (p.z + 1) * 0.35;
+        var vr = 2.5 + (p.z + 1) * 1.2;
+
+        // Glow
+        gCtx.beginPath();
+        gCtx.arc(p.x, p.y, vr * 3, 0, Math.PI * 2);
+        gCtx.fillStyle = 'rgba(' + goldRGB + ',' + (vAlpha * 0.1) + ')';
+        gCtx.fill();
+
+        // Vertex dot
+        gCtx.beginPath();
+        gCtx.arc(p.x, p.y, vr, 0, Math.PI * 2);
+        gCtx.fillStyle = 'rgba(' + goldRGB + ',' + vAlpha + ')';
+        gCtx.fill();
+
+        // Tech label
+        if (vAlpha > 0.3) {
+          gCtx.font = '600 11px Inter, system-ui, sans-serif';
+          gCtx.textAlign = 'center';
+          gCtx.textBaseline = 'middle';
+          gCtx.fillStyle = 'rgba(' + goldRGB + ',' + (vAlpha * 0.85) + ')';
+          gCtx.fillText(techLabels[j], p.x, p.y - vr - 10);
+        }
+      }
+
+      requestAnimationFrame(drawGeo);
+    }
+
+    drawGeo();
+
+    window.addEventListener('resize', function () {
+      gResize();
+    });
+  }
+
+  // Defer heavy desktop-only features
+  var initDesktopFeatures = function () {
+    initParticles();
+    initGeoShape();
+
+    // ─── 3D Tilt on Project Cards (Desktop) ─────
+    if (!isMobile()) {
+      var cards = document.querySelectorAll('.project-card');
+      cards.forEach(function (card) {
+        card.classList.add('tilt-hover');
+
+        card.addEventListener('mousemove', function (e) {
+          var rect = card.getBoundingClientRect();
+          var x = e.clientX - rect.left;
+          var y = e.clientY - rect.top;
+          var cx = rect.width / 2;
+          var cy = rect.height / 2;
+
+          var rotY = ((x - cx) / cx) * 3;
+          var rotX = ((cy - y) / cy) * 2;
+
+          card.style.transform = 'perspective(800px) rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg) translateY(-6px)';
+        });
+
+        card.addEventListener('mouseleave', function () {
+          card.style.transform = '';
+        });
       });
+    }
+  };
 
-      card.addEventListener('mouseleave', function () {
-        card.style.transform = '';
-      });
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(initDesktopFeatures);
+  } else {
+    setTimeout(initDesktopFeatures, 1);
+  }
+
+  // ─── Magnetic Hero Text (Desktop only) ────────
+  var magName = document.getElementById('magneticName');
+  var magLetters = magName ? magName.querySelectorAll('.mag-letter') : [];
+
+  if (magLetters.length && window.matchMedia('(pointer: fine)').matches) {
+    var heroEl = document.querySelector('.hero');
+
+    heroEl.addEventListener('mousemove', function (e) {
+      for (var i = 0; i < magLetters.length; i++) {
+        var letter = magLetters[i];
+        var rect = letter.getBoundingClientRect();
+        var lx = rect.left + rect.width / 2;
+        var ly = rect.top + rect.height / 2;
+        var dx = e.clientX - lx;
+        var dy = e.clientY - ly;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        var maxDist = 120;
+
+        if (dist < maxDist) {
+          var force = (1 - dist / maxDist) * 30;
+          var angle = Math.atan2(dy, dx);
+          var tx = -Math.cos(angle) * force;
+          var ty = -Math.sin(angle) * force;
+          letter.style.transform = 'translate(' + tx + 'px, ' + ty + 'px)';
+        } else {
+          letter.style.transform = '';
+        }
+      }
+    });
+
+    heroEl.addEventListener('mouseleave', function () {
+      for (var i = 0; i < magLetters.length; i++) {
+        magLetters[i].style.transform = '';
+      }
+    });
+  }
+
+  // ─── Golden Sparkle Cursor Trail (Desktop only) ──
+  if (window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var sparkleCanvas = document.createElement('canvas');
+    sparkleCanvas.id = 'sparkleCanvas';
+    document.body.appendChild(sparkleCanvas);
+
+    var sCtx = sparkleCanvas.getContext('2d');
+    var sparkles = [];
+    var lastSparkleTime = 0;
+
+    function resizeSparkle() {
+      sparkleCanvas.width = window.innerWidth;
+      sparkleCanvas.height = window.innerHeight;
+    }
+    resizeSparkle();
+    window.addEventListener('resize', resizeSparkle);
+
+    document.addEventListener('mousemove', function (e) {
+      var now = Date.now();
+      if (now - lastSparkleTime < 50) return;
+      lastSparkleTime = now;
+
+      var isLight = root.getAttribute('data-theme') === 'light';
+
+      for (var i = 0; i < 3; i++) {
+        sparkles.push({
+          x: e.clientX + (Math.random() * 16 - 8),
+          y: e.clientY + (Math.random() * 16 - 8),
+          r: Math.random() * 2.5 + 0.8,
+          alpha: Math.random() * 0.5 + 0.5,
+          dy: Math.random() * 0.8 + 0.3,
+          dx: (Math.random() - 0.5) * 0.6,
+          decay: Math.random() * 0.015 + 0.015,
+          gold: isLight ? [140, 106, 46] : [198, 167, 94]
+        });
+      }
+    });
+
+    var sparkleRunning = false;
+
+    function drawSparkles() {
+      sCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+
+      for (var i = sparkles.length - 1; i >= 0; i--) {
+        var s = sparkles[i];
+        s.x += s.dx;
+        s.y += s.dy;
+        s.alpha -= s.decay;
+        s.r *= 0.985;
+
+        if (s.alpha <= 0) {
+          sparkles.splice(i, 1);
+          continue;
+        }
+
+        sCtx.beginPath();
+        sCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        sCtx.fillStyle = 'rgba(' + s.gold[0] + ',' + s.gold[1] + ',' + s.gold[2] + ',' + s.alpha + ')';
+        sCtx.fill();
+      }
+
+      if (sparkles.length > 0) {
+        requestAnimationFrame(drawSparkles);
+      } else {
+        sparkleRunning = false;
+      }
+    }
+
+    // Start sparkle loop only when there are sparkles
+    document.addEventListener('mousemove', function () {
+      if (!sparkleRunning && sparkles.length > 0) {
+        sparkleRunning = true;
+        drawSparkles();
+      }
     });
   }
 
